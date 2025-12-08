@@ -1,15 +1,39 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { BetProvider } from './context/BetContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { BetProvider, useBets } from './context/BetContext';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
-// Import pages lazily or directly if they exist, for now we will create placeholders
 import History from './pages/History';
 import Analytics from './pages/Analytics';
 
-function App() {
+// Component to handle migration when user logs in
+const MigrationHandler = () => {
+  const { currentUser } = useAuth();
+  const { migrateFromLocalStorage } = useBets();
+  const [migrationAttempted, setMigrationAttempted] = React.useState(false);
+
+  useEffect(() => {
+    // Only run migration once per user session
+    if (currentUser && !migrationAttempted) {
+      setMigrationAttempted(true);
+      // Attempt migration on login (only once)
+      migrateFromLocalStorage();
+    }
+    
+    // Reset when user changes
+    if (!currentUser) {
+      setMigrationAttempted(false);
+    }
+  }, [currentUser, migrateFromLocalStorage, migrationAttempted]);
+
+  return null;
+};
+
+function AppContent() {
   return (
     <BetProvider>
+      <MigrationHandler />
       <Router>
         <Layout>
           <Routes>
@@ -20,6 +44,14 @@ function App() {
         </Layout>
       </Router>
     </BetProvider>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

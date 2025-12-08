@@ -5,9 +5,13 @@ const BetCard = ({ bet, onEdit }) => {
   const { deleteBet } = useBets();
   const isWin = bet.profit > 0;
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this bet?')) {
-      deleteBet(bet.id);
+      try {
+        await deleteBet(bet.id);
+      } catch (err) {
+        alert('Failed to delete bet: ' + (err.message || 'Unknown error'));
+      }
     }
   };
 

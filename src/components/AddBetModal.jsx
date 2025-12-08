@@ -13,6 +13,8 @@ const AddBetModal = ({ isOpen, onClose, onAddBet, onUpdateBet, editingBet }) => 
         odds: '',
         category: ''
     });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
     // Update form when editingBet changes
     React.useEffect(() => {
@@ -49,34 +51,43 @@ const AddBetModal = ({ isOpen, onClose, onAddBet, onUpdateBet, editingBet }) => 
 
     if (!isOpen) return null;
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const profit = parseFloat(formData.returnAmount) - parseFloat(formData.stake);
+        setError('');
+        setLoading(true);
 
-        // Create bet object
-        const betDate = new Date(formData.date);
-        const betData = {
-            id: editingBet ? editingBet.id : Date.now(),
-            game: formData.game,
-            stake: parseFloat(formData.stake),
-            returnAmount: parseFloat(formData.returnAmount),
-            profit: profit,
-            date: betDate.toISOString().split('T')[0], // Store as ISO date string for easier parsing
-            dateDisplay: betDate.toLocaleDateString(), // Format date for display
-            screenshot: formData.screenshot, // In a real app, this would be a URL from a storage bucket
-            sportLeague: formData.sportLeague || null,
-            cashedOut: formData.cashedOut,
-            live: formData.live,
-            odds: formData.odds ? parseFloat(formData.odds) : null,
-            category: formData.category || null
-        };
+        try {
+            const profit = parseFloat(formData.returnAmount) - parseFloat(formData.stake);
 
-        if (editingBet) {
-            onUpdateBet(betData);
-        } else {
-            onAddBet(betData);
+            // Create bet object
+            const betDate = new Date(formData.date);
+            const betData = {
+                id: editingBet ? editingBet.id : Date.now(),
+                game: formData.game,
+                stake: parseFloat(formData.stake),
+                returnAmount: parseFloat(formData.returnAmount),
+                profit: profit,
+                date: betDate.toISOString().split('T')[0], // Store as ISO date string for easier parsing
+                dateDisplay: betDate.toLocaleDateString(), // Format date for display
+                screenshot: formData.screenshot, // In a real app, this would be a URL from a storage bucket
+                sportLeague: formData.sportLeague || null,
+                cashedOut: formData.cashedOut,
+                live: formData.live,
+                odds: formData.odds ? parseFloat(formData.odds) : null,
+                category: formData.category || null
+            };
+
+            if (editingBet) {
+                await onUpdateBet(betData);
+            } else {
+                await onAddBet(betData);
+            }
+            onClose();
+        } catch (err) {
+            setError(err.message || 'Failed to save bet');
+        } finally {
+            setLoading(false);
         }
-        onClose();
     };
 
     const handleImageChange = (e) => {
@@ -108,6 +119,19 @@ const AddBetModal = ({ isOpen, onClose, onAddBet, onUpdateBet, editingBet }) => 
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>
                     {editingBet ? 'Edit Bet' : 'Add New Bet'}
                 </h2>
+
+                {error && (
+                    <div style={{
+                        padding: '0.75rem',
+                        borderRadius: 'var(--radius-md)',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        color: 'var(--danger)',
+                        marginBottom: '1rem',
+                        fontSize: '0.875rem'
+                    }}>
+                        {error}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div>
@@ -334,8 +358,9 @@ const AddBetModal = ({ isOpen, onClose, onAddBet, onUpdateBet, editingBet }) => 
                             type="submit"
                             className="btn btn-primary"
                             style={{ flex: 1 }}
+                            disabled={loading}
                         >
-                            {editingBet ? 'Update Bet' : 'Add Bet'}
+                            {loading ? 'Saving...' : (editingBet ? 'Update Bet' : 'Add Bet')}
                         </button>
                     </div>
                 </form>

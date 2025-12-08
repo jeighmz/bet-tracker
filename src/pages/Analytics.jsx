@@ -170,6 +170,8 @@ const Analytics = () => {
     const [showAddDeposit, setShowAddDeposit] = useState(false);
     const [depositAmount, setDepositAmount] = useState('');
     const [depositDate, setDepositDate] = useState(new Date().toISOString().split('T')[0]);
+    const [depositLoading, setDepositLoading] = useState(false);
+    const [depositError, setDepositError] = useState('');
 
     // Prepare data for Profit Trend
     // Sort by date ascending for the chart
@@ -494,19 +496,37 @@ const Analytics = () => {
         amount: deposit.amount
     }));
 
-    const handleAddDeposit = (e) => {
+    const handleAddDeposit = async (e) => {
         e.preventDefault();
+        setDepositError('');
         if (depositAmount && parseFloat(depositAmount) > 0) {
-            const depositDateObj = new Date(depositDate);
-            addDeposit({
-                id: Date.now(),
-                amount: parseFloat(depositAmount),
-                date: depositDate,
-                dateDisplay: depositDateObj.toLocaleDateString()
-            });
-            setDepositAmount('');
-            setDepositDate(new Date().toISOString().split('T')[0]);
-            setShowAddDeposit(false);
+            setDepositLoading(true);
+            try {
+                const depositDateObj = new Date(depositDate);
+                await addDeposit({
+                    id: Date.now(),
+                    amount: parseFloat(depositAmount),
+                    date: depositDate,
+                    dateDisplay: depositDateObj.toLocaleDateString()
+                });
+                setDepositAmount('');
+                setDepositDate(new Date().toISOString().split('T')[0]);
+                setShowAddDeposit(false);
+            } catch (err) {
+                setDepositError(err.message || 'Failed to add deposit');
+            } finally {
+                setDepositLoading(false);
+            }
+        }
+    };
+
+    const handleDeleteDeposit = async (id) => {
+        if (window.confirm('Are you sure you want to delete this deposit?')) {
+            try {
+                await deleteDeposit(id);
+            } catch (err) {
+                alert('Failed to delete deposit: ' + (err.message || 'Unknown error'));
+            }
         }
     };
 
@@ -847,6 +867,18 @@ const Analytics = () => {
             {showAddDeposit && (
                 <div className="card" style={{ marginBottom: '2rem' }}>
                     <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem' }}>Add Deposit</h3>
+                    {depositError && (
+                        <div style={{
+                            padding: '0.75rem',
+                            borderRadius: 'var(--radius-md)',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            color: 'var(--danger)',
+                            marginBottom: '1rem',
+                            fontSize: '0.875rem'
+                        }}>
+                            {depositError}
+                        </div>
+                    )}
                     <form className="analytics-deposit-form" onSubmit={handleAddDeposit} style={{ display: 'flex', gap: '1rem', alignItems: 'end' }}>
                         <div style={{ flex: 1 }}>
                             <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Amount ($)</label>
@@ -891,8 +923,9 @@ const Analytics = () => {
                             type="submit"
                             className="btn btn-primary"
                             style={{ padding: '0.75rem 1.5rem' }}
+                            disabled={depositLoading}
                         >
-                            Add
+                            {depositLoading ? 'Adding...' : 'Add'}
                         </button>
                     </form>
                 </div>
@@ -916,7 +949,7 @@ const Analytics = () => {
                                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                                     <span style={{ fontWeight: 'bold' }}>${deposit.amount.toFixed(2)}</span>
                                     <button
-                                        onClick={() => deleteDeposit(deposit.id)}
+                                        onClick={() => handleDeleteDeposit(deposit.id)}
                                         style={{
                                             padding: '0.25rem 0.5rem',
                                             fontSize: '0.75rem',

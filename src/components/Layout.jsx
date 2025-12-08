@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import Auth from './Auth';
 
 const Layout = ({ children }) => {
   const location = useLocation();
+  const { currentUser, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // If user is not authenticated, show auth component
+  if (!currentUser) {
+    return <Auth />;
+  }
 
   const isActive = (path) => location.pathname === path;
 
@@ -154,8 +162,25 @@ const Layout = ({ children }) => {
             </Link>
           </nav>
 
-          <div style={{ marginTop: 'auto' }}>
-            {/* We can add a mini-summary here later if needed */}
+          <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
+            <div style={{ marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              {currentUser?.email}
+            </div>
+            <button
+              onClick={logout}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border)',
+                backgroundColor: 'var(--bg-dark)',
+                color: 'var(--text-main)',
+                cursor: 'pointer',
+                fontSize: '0.875rem'
+              }}
+            >
+              Sign Out
+            </button>
           </div>
         </aside>
 
