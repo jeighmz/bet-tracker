@@ -160,6 +160,9 @@ const Layout = ({ children }) => {
             <Link to="/analytics" style={linkStyle('/analytics')}>
               Analytics
             </Link>
+            <Link to="/calendar" style={linkStyle('/calendar')}>
+              Calendar
+            </Link>
           </nav>
 
           <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>

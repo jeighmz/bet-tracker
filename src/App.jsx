@@ -6,6 +6,7 @@ import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import History from './pages/History';
 import Analytics from './pages/Analytics';
+import Calendar from './pages/Calendar';
 
 // Component to handle migration when user logs in
 const MigrationHandler = () => {
@@ -40,6 +41,7 @@ function AppContent() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/history" element={<History />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/calendar" element={<Calendar />} />
           </Routes>
         </Layout>
       </Router>
