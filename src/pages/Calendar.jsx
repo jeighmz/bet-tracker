@@ -153,7 +153,7 @@ const Calendar = () => {
             {/* Calendar */}
             <div className="card" style={{ overflow: 'hidden', width: '100%', maxWidth: '100%', marginBottom: '2rem' }}>
                 <div className="calendar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0, lineHeight: '1.5', flexShrink: 0 }}>Daily Profit Calendar</h3>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0, lineHeight: '1.5', flexShrink: 0, flex: '1 1 auto', minWidth: 0 }}>Daily Profit Calendar</h3>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexShrink: 0, flexWrap: 'nowrap' }}>
                         <button
                             onClick={goToToday}
@@ -342,25 +342,9 @@ const Calendar = () => {
             {/* Selected Day Bets */}
             {selectedDate && (
                 <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                         <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
                             {monthNames[month]} {selectedDate}, {year}
-                            {dailyData[selectedDate] && (
-                                <span style={{
-                                    fontSize: '1rem',
-                                    fontWeight: 'normal',
-                                    color: 'var(--text-muted)',
-                                    marginLeft: '0.5rem'
-                                }}>
-                                    - {dailyData[selectedDate].bets.length} bet{dailyData[selectedDate].bets.length !== 1 ? 's' : ''} • 
-                                    <span style={{
-                                        color: getProfitColor(dailyData[selectedDate].profit),
-                                        marginLeft: '0.25rem'
-                                    }}>
-                                        ${dailyData[selectedDate].profit > 0 ? '+' : ''}{dailyData[selectedDate].profit.toFixed(2)} profit
-                                    </span>
-                                </span>
-                            )}
                         </h3>
                         <button
                             onClick={handleSortToggle}
@@ -384,6 +368,98 @@ const Calendar = () => {
                             </span>
                         </button>
                     </div>
+
+                    {/* Day Summary Statistics */}
+                    {dailyData[selectedDate] && selectedDateBets.length > 0 && (() => {
+                        const dayBets = selectedDateBets;
+                        const totalProfit = dailyData[selectedDate].profit;
+                        const totalBets = dayBets.length;
+                        const wins = dayBets.filter(bet => bet.profit > 0).length;
+                        const losses = dayBets.filter(bet => bet.profit <= 0).length;
+                        const winRate = totalBets > 0 ? Math.round((wins / totalBets) * 100) : 0;
+                        const totalStake = dayBets.reduce((sum, bet) => sum + bet.stake, 0);
+                        const avgProfit = totalBets > 0 ? (totalProfit / totalBets) : 0;
+                        const bestWin = dayBets.reduce((max, bet) => (bet.profit > max ? bet.profit : max), 0);
+                        const worstLoss = dayBets.reduce((min, bet) => (bet.profit < min ? bet.profit : min), 0);
+                        const roi = totalStake > 0 ? ((totalProfit / totalStake) * 100) : 0;
+
+                        return (
+                            <div style={{ 
+                                display: 'grid', 
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
+                                gap: '1rem', 
+                                marginBottom: '2rem' 
+                            }}>
+                                <div className="card">
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Total Profit</p>
+                                    <p style={{
+                                        fontSize: '1.5rem',
+                                        fontWeight: 'bold',
+                                        color: totalProfit >= 0 ? 'var(--success)' : 'var(--danger)'
+                                    }}>
+                                        ${totalProfit >= 0 ? '+' : ''}{totalProfit.toFixed(2)}
+                                    </p>
+                                </div>
+                                <div className="card">
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Total Bets</p>
+                                    <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-main)' }}>
+                                        {totalBets}
+                                    </p>
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                                        {wins}W / {losses}L
+                                    </p>
+                                </div>
+                                <div className="card">
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Win Rate</p>
+                                    <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-main)' }}>
+                                        {winRate}%
+                                    </p>
+                                </div>
+                                <div className="card">
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Total Staked</p>
+                                    <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-main)' }}>
+                                        ${totalStake.toFixed(2)}
+                                    </p>
+                                </div>
+                                <div className="card">
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Avg Profit/Bet</p>
+                                    <p style={{
+                                        fontSize: '1.5rem',
+                                        fontWeight: 'bold',
+                                        color: avgProfit >= 0 ? 'var(--success)' : 'var(--danger)'
+                                    }}>
+                                        ${avgProfit >= 0 ? '+' : ''}{avgProfit.toFixed(2)}
+                                    </p>
+                                </div>
+                                {bestWin > 0 && (
+                                    <div className="card">
+                                        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Best Win</p>
+                                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--success)' }}>
+                                            ${bestWin.toFixed(2)}
+                                        </p>
+                                    </div>
+                                )}
+                                {worstLoss < 0 && (
+                                    <div className="card">
+                                        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Worst Loss</p>
+                                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--danger)' }}>
+                                            ${worstLoss.toFixed(2)}
+                                        </p>
+                                    </div>
+                                )}
+                                <div className="card">
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>ROI</p>
+                                    <p style={{
+                                        fontSize: '1.5rem',
+                                        fontWeight: 'bold',
+                                        color: roi >= 0 ? 'var(--success)' : 'var(--danger)'
+                                    }}>
+                                        {roi >= 0 ? '+' : ''}{roi.toFixed(1)}%
+                                    </p>
+                                </div>
+                            </div>
+                        );
+                    })()}
 
                     {selectedDateBets.length === 0 ? (
                         <div className="card" style={{ display: 'flex', justifyContent: 'center', padding: '3rem', color: 'var(--text-muted)' }}>

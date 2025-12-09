@@ -51,6 +51,7 @@ const Layout = ({ children }) => {
             transition: transform 0.3s ease-in-out;
             z-index: 1000;
             width: 280px !important;
+            padding-top: 4.5rem !important;
           }
           .layout-sidebar.mobile-open {
             transform: translateX(0);
@@ -115,7 +116,8 @@ const Layout = ({ children }) => {
           alignItems: 'center',
           justifyContent: 'center',
           minWidth: '44px',
-          minHeight: '44px'
+          minHeight: '44px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
         }}
         aria-label="Toggle menu"
       >
@@ -143,11 +145,12 @@ const Layout = ({ children }) => {
           flexDirection: 'column',
           position: 'fixed',
           height: '100vh',
-          overflowY: 'auto'
+          overflowY: 'auto',
+          zIndex: 1000
         }}>
-          <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ width: '32px', height: '32px', background: 'var(--primary)', borderRadius: '8px' }}></div>
-            <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text-main)' }}>BetTracker</h1>
+          <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', paddingTop: '0.5rem' }}>
+            <div style={{ width: '32px', height: '32px', background: 'var(--primary)', borderRadius: '8px', flexShrink: 0 }}></div>
+            <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text-main)', margin: 0, lineHeight: '1.2', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>BetTracker</h1>
           </div>
 
           <nav style={{ display: 'flex', flexDirection: 'column' }}>

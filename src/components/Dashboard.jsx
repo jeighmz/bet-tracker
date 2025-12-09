@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { useBets } from '../context/BetContext';
 import BetCard from './BetCard';
 import AddBetModal from './AddBetModal';
+import ImportBetsModal from './ImportBetsModal';
 
 const Dashboard = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [editingBet, setEditingBet] = useState(null);
     const { bets, addBet, updateBet, stats } = useBets();
 
@@ -23,20 +25,36 @@ const Dashboard = () => {
 
     return (
         <div>
-            <header style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <header style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
                     <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Overview</h2>
                     <p style={{ color: 'var(--text-muted)' }}>Track your latest wins and performance.</p>
                 </div>
-                <button
-                    className="btn btn-primary"
-                    onClick={() => {
-                        setEditingBet(null);
-                        setIsModalOpen(true);
-                    }}
-                >
-                    + Add New Bet
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <button
+                        onClick={() => setIsImportModalOpen(true)}
+                        style={{
+                            padding: '0.75rem 1rem',
+                            borderRadius: 'var(--radius-md)',
+                            border: '1px solid var(--border)',
+                            backgroundColor: 'var(--bg-dark)',
+                            color: 'var(--text-main)',
+                            cursor: 'pointer',
+                            fontSize: '0.875rem'
+                        }}
+                    >
+                        Import from DraftKings
+                    </button>
+                    <button
+                        className="btn btn-primary"
+                        onClick={() => {
+                            setEditingBet(null);
+                            setIsModalOpen(true);
+                        }}
+                    >
+                        + Add New Bet
+                    </button>
+                </div>
             </header>
 
             {/* Stats Grid */}
@@ -82,6 +100,10 @@ const Dashboard = () => {
                 onAddBet={addBet}
                 onUpdateBet={updateBet}
                 editingBet={editingBet}
+            />
+            <ImportBetsModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
             />
         </div>
     );

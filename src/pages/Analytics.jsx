@@ -1384,6 +1384,134 @@ const Analytics = () => {
             <div style={{ marginTop: '2rem' }}>
                 <CalendarView bets={bets} />
             </div>
+
+            {/* Daily/Time-Based Stats Row */}
+            {bets.length > 0 && (() => {
+                // Calculate daily statistics
+                const dailyData = {};
+                bets.forEach(bet => {
+                    if (!bet.date) return;
+                    const dateKey = bet.date; // Already in YYYY-MM-DD format
+                    if (!dailyData[dateKey]) {
+                        dailyData[dateKey] = { profit: 0, bets: 0 };
+                    }
+                    dailyData[dateKey].profit += bet.profit;
+                    dailyData[dateKey].bets += 1;
+                });
+
+                const dailyProfits = Object.values(dailyData).map(d => d.profit);
+                const daysWithBets = Object.keys(dailyData).length;
+                const averageDailyGain = daysWithBets > 0 ? (stats.totalProfit / daysWithBets) : 0;
+                const bestDay = dailyProfits.length > 0 ? Math.max(...dailyProfits) : 0;
+                const worstDay = dailyProfits.length > 0 ? Math.min(...dailyProfits) : 0;
+                const averageBetsPerDay = daysWithBets > 0 ? (stats.totalBets / daysWithBets).toFixed(1) : 0;
+
+                // Calculate weekly gain (last 7 days)
+                const sevenDaysAgo = new Date();
+                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                const weeklyBets = bets.filter(bet => {
+                    if (!bet.date) return false;
+                    const betDate = new Date(bet.date);
+                    return betDate >= sevenDaysAgo;
+                });
+                const weeklyGain = weeklyBets.reduce((sum, bet) => sum + bet.profit, 0);
+
+                // Calculate monthly gain (last 30 days)
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                const monthlyBets = bets.filter(bet => {
+                    if (!bet.date) return false;
+                    const betDate = new Date(bet.date);
+                    return betDate >= thirtyDaysAgo;
+                });
+                const monthlyGain = monthlyBets.reduce((sum, bet) => sum + bet.profit, 0);
+
+                // Find best and worst day dates
+                const bestDayDate = Object.keys(dailyData).find(date => dailyData[date].profit === bestDay);
+                const worstDayDate = Object.keys(dailyData).find(date => dailyData[date].profit === worstDay);
+
+                // Calculate profit per bet
+                const profitPerBet = stats.totalProfit / stats.totalBets;
+
+                return (
+                    <div style={{ marginTop: '2rem' }}>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>Daily Performance</h3>
+                        <div className="analytics-summary-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
+                            <div className="card analytics-card">
+                                <p className="analytics-card-title" style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Avg Daily Gain</p>
+                                <p className="analytics-card-value" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: averageDailyGain >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                                    ${averageDailyGain >= 0 ? '+' : ''}{averageDailyGain.toFixed(2)}
+                                </p>
+                                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                                    {daysWithBets} active days
+                                </p>
+                            </div>
+                            <div className="card analytics-card">
+                                <p className="analytics-card-title" style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Weekly Gain</p>
+                                <p className="analytics-card-value" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: weeklyGain >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                                    ${weeklyGain >= 0 ? '+' : ''}{weeklyGain.toFixed(2)}
+                                </p>
+                                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                                    Last 7 days
+                                </p>
+                            </div>
+                            <div className="card analytics-card">
+                                <p className="analytics-card-title" style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Monthly Gain</p>
+                                <p className="analytics-card-value" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: monthlyGain >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                                    ${monthlyGain >= 0 ? '+' : ''}{monthlyGain.toFixed(2)}
+                                </p>
+                                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                                    Last 30 days
+                                </p>
+                            </div>
+                            {bestDay > 0 && (
+                                <div className="card analytics-card">
+                                    <p className="analytics-card-title" style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Best Day</p>
+                                    <p className="analytics-card-value" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--success)' }}>
+                                        ${bestDay.toFixed(2)}
+                                    </p>
+                                    {bestDayDate && (
+                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                                            {new Date(bestDayDate).toLocaleDateString()}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                            {worstDay < 0 && (
+                                <div className="card analytics-card">
+                                    <p className="analytics-card-title" style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Worst Day</p>
+                                    <p className="analytics-card-value" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--danger)' }}>
+                                        ${worstDay.toFixed(2)}
+                                    </p>
+                                    {worstDayDate && (
+                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                                            {new Date(worstDayDate).toLocaleDateString()}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                            <div className="card analytics-card">
+                                <p className="analytics-card-title" style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Days Active</p>
+                                <p className="analytics-card-value" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-main)' }}>
+                                    {daysWithBets}
+                                </p>
+                                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                                    {averageBetsPerDay} bets/day avg
+                                </p>
+                            </div>
+                            <div className="card analytics-card">
+                                <p className="analytics-card-title" style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Profit Per Bet</p>
+                                <p className="analytics-card-value" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: profitPerBet >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                                    ${profitPerBet >= 0 ? '+' : ''}{profitPerBet.toFixed(2)}
+                                </p>
+                                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                                    Average across all bets
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
         </div>
     );
 };
