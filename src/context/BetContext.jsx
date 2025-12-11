@@ -29,6 +29,7 @@ export const BetProvider = ({ children }) => {
     const { currentUser } = useAuth();
     const [bets, setBets] = useState([]);
     const [deposits, setDeposits] = useState([]);
+    const [withdrawals, setWithdrawals] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // Load bets from Firestore
@@ -36,6 +37,7 @@ export const BetProvider = ({ children }) => {
         if (!currentUser) {
             setBets([]);
             setDeposits([]);
+            setWithdrawals([]);
             setLoading(false);
             return;
         }
@@ -97,9 +99,36 @@ export const BetProvider = ({ children }) => {
             }
         );
 
+        // Set up real-time listener for withdrawals
+        const withdrawalsRef = collection(db, 'users', currentUser.uid, 'withdrawals');
+        const withdrawalsQuery = query(withdrawalsRef, orderBy('date', 'desc'));
+        
+        const unsubscribeWithdrawals = onSnapshot(
+            withdrawalsQuery,
+            (snapshot) => {
+                const withdrawalsData = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    date: doc.data().date instanceof Timestamp
+                        ? doc.data().date.toDate().toISOString().split('T')[0]
+                        : doc.data().date,
+                    dateDisplay: doc.data().dateDisplay || (
+                        doc.data().date instanceof Timestamp
+                            ? doc.data().date.toDate().toLocaleDateString()
+                            : new Date(doc.data().date).toLocaleDateString()
+                    )
+                }));
+                setWithdrawals(withdrawalsData);
+            },
+            (error) => {
+                console.error('Error loading withdrawals:', error);
+            }
+        );
+
         return () => {
             unsubscribeBets();
             unsubscribeDeposits();
+            unsubscribeWithdrawals();
         };
     }, [currentUser]);
 
@@ -185,6 +214,56 @@ export const BetProvider = ({ children }) => {
             await deleteDoc(depositRef);
         } catch (error) {
             console.error('Error deleting deposit:', error);
+            throw error;
+        }
+    };
+
+    const addWithdrawal = async (withdrawal) => {
+        if (!currentUser) {
+            throw new Error('User must be logged in to add withdrawals');
+        }
+
+        try {
+            const withdrawalsRef = collection(db, 'users', currentUser.uid, 'withdrawals');
+            const withdrawalData = {
+                ...withdrawal,
+                date: withdrawal.date || new Date().toISOString().split('T')[0],
+                dateDisplay: withdrawal.dateDisplay || new Date(withdrawal.date).toLocaleDateString(),
+                createdAt: Timestamp.now()
+            };
+            const { id, ...withdrawalDataWithoutId } = withdrawalData;
+            await addDoc(withdrawalsRef, withdrawalDataWithoutId);
+        } catch (error) {
+            console.error('Error adding withdrawal:', error);
+            throw error;
+        }
+    };
+
+    const deleteWithdrawal = async (id) => {
+        if (!currentUser) {
+            throw new Error('User must be logged in to delete withdrawals');
+        }
+
+        try {
+            const withdrawalRef = doc(db, 'users', currentUser.uid, 'withdrawals', id);
+            await deleteDoc(withdrawalRef);
+        } catch (error) {
+            console.error('Error deleting withdrawal:', error);
+            throw error;
+        }
+    };
+
+    const updateWithdrawal = async (updatedWithdrawal) => {
+        if (!currentUser) {
+            throw new Error('User must be logged in to update withdrawals');
+        }
+
+        try {
+            const withdrawalRef = doc(db, 'users', currentUser.uid, 'withdrawals', updatedWithdrawal.id);
+            const { id, ...withdrawalData } = updatedWithdrawal;
+            await updateDoc(withdrawalRef, withdrawalData);
+        } catch (error) {
+            console.error('Error updating withdrawal:', error);
             throw error;
         }
     };
@@ -456,11 +535,15 @@ export const BetProvider = ({ children }) => {
     const value = {
         bets,
         deposits,
+        withdrawals,
         addBet,
         updateBet,
         deleteBet,
         addDeposit,
         deleteDeposit,
+        addWithdrawal,
+        updateWithdrawal,
+        deleteWithdrawal,
         migrateFromLocalStorage,
         cleanupDuplicates,
         resetAndRemigrate,

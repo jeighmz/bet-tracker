@@ -160,6 +160,9 @@ const Layout = ({ children }) => {
             <Link to="/history" style={linkStyle('/history')}>
               History
             </Link>
+            <Link to="/cashed-out" style={linkStyle('/cashed-out')}>
+              Cashed Out
+            </Link>
             <Link to="/analytics" style={linkStyle('/analytics')}>
               Analytics
             </Link>
